@@ -1,6 +1,5 @@
-import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, SafeAreaView, Animated, Easing, Pressable, ImageBackground, Image } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, SafeAreaView, Animated, Pressable, ImageBackground, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 //@ts-ignore
 import successBg from './assets/success-bg.png';
@@ -185,6 +184,7 @@ export default function App() {
   const [currentMatchedCardIndices, setCurrentMatchedCardIndices] = useState<number[]>([]);
   const [level, setLevel] = useState<number>(1);
   const [maxMoves, setMaxMoves] = useState<number>(14);
+  const [instructionModalVisible ,setInstructionsModalVisible] = useState(false);
 
 
 
@@ -193,9 +193,6 @@ export default function App() {
 
   // on mount, set timer and shuffle cards
   useEffect(() => {
-    const fiveMinutes = 60 * 2;
-    // startTimer(fiveMinutes);
-    // shuffle(cardsArray);
     setCards(cardsArray);
     setClicks(0);
     setMatchedCardList([]);
@@ -203,7 +200,12 @@ export default function App() {
     const initialCards = shuffle([...cardsArray]);
     setCards(initialCards);
     setLevel(1);
-    // setMaxMoves(14);
+    // setInstructionsModalVisible(true);
+    // show an instruction alert
+    Alert.alert(
+      "Recall Rumble! 🎮",
+      "In Recall Rumble, the goal is to match all the cards within a limited number of moves to advance to the next level.",
+    )
 
     return () => { };
 
@@ -219,18 +221,6 @@ export default function App() {
   }, [showMatchAnimation]);
 
   useEffect(() => {
-    // if (openCards.length === 2) {
-    //   setClicks(clicks + 1);
-    //   if (clicks === maxMoves) {
-    //     setFailedModalVisible(true);
-    //   }
-    // }
-
-    // display failed modal if user has reached max moves
-    console.log('====================================');
-    console.log('clicks', clicks);
-    console.log('maxMoves', maxMoves);
-    console.log('====================================');
     if (clicks  >= maxMoves) {
       setFailedModalVisible(true);
       return
@@ -266,22 +256,9 @@ export default function App() {
 
 
 
-  // if card is clicked, add to openCards array
   const cardsOpen = (cardIndex: number) => {
     const updatedOpenCards = [...openCards, cardIndex];
     setOpenCards(updatedOpenCards);
-    // display failed modal if user has reached max moves
-
-    // console.log('====================================');
-    // console.log('clicks', clicks);
-    // console.log('maxMoves', maxMoves);
-    // console.log('====================================');
-    // if (clicks  >= maxMoves) {
-    //   setFailedModalVisible(true);
-    //   return
-    // }
-
-    // if two cards are open, check if they match
     if (updatedOpenCards.length === 2) {
       setClicks((prevClicks) => prevClicks + 1);
       const [firstCard, secondCard] = updatedOpenCards.map((index) => cards[index]);
@@ -293,7 +270,6 @@ export default function App() {
     }
   }
 
-  // if cards match, add to matchedCards array
   const matchedCards = (...cardIndices: number[]) => {
     const updatedMatchedCardList = [...matchedCardList, ...cardIndices];
     setMatchedCardList(updatedMatchedCardList);
@@ -557,27 +533,42 @@ export default function App() {
         marginTop: 20,
         justifyContent: 'center',
       }}>
-        <Pressable onPress={() => resetGame()} style={{
+        <Pressable 
+        onPress={() => resetGame()} 
+        style={{
           width: '60%',
           height: 50,
-          borderRadius: 20,
+          borderRadius: 10,
           justifyContent: 'center',
           alignItems: 'center',
           backgroundColor: '#0C4E50',
         }}>
-          <Text style={{
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: 'white',
-          }} >Reset Game</Text>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: 'bold',
+              color: 'white',
+            }} >Reset Game</Text>
         </Pressable>
       </View>
 
       {/* Congratulations Modal */}
-      <SuccessModal continueGame={continueGame} modalVisible={modalVisible} clicks={clicks} level={level} setModalVisible={setModalVisible} maxMoves={maxMoves} />
+      <SuccessModal
+        continueGame={continueGame}
+        modalVisible={modalVisible}
+        clicks={clicks}
+        level={level}
+        setModalVisible={setModalVisible}
+        maxMoves={maxMoves}
+      />
 
       {/* Failed Modal */}
-      <FailedModal continueGame={continueGame} maxMoves={maxMoves} failedModalVisible={failedModalVisible} setFailedModalVisible={setFailedModalVisible} />
+      <FailedModal
+        continueGame={continueGame}
+        maxMoves={maxMoves}
+        failedModalVisible={failedModalVisible}
+        setFailedModalVisible={setFailedModalVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -594,18 +585,14 @@ type SuccessModalProps = {
 export function SuccessModal(props: SuccessModalProps) {
   const { modalVisible, clicks, setModalVisible, level, maxMoves, continueGame } = props;
   return (
-    <View style={styles.centeredView}>
+    <View>
       <Modal
         animationType="slide"
         transparent={true}
-        // visible={true}
         visible={modalVisible}
       >
         <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <ImageBackground source={successBg} resizeMode="cover" style={{
-              padding: 35,
-            }}>
+          <View style={[styles.modalView, { padding: 20, }]}>
               <View
                 style={{
                   alignItems: 'center',
@@ -613,8 +600,6 @@ export function SuccessModal(props: SuccessModalProps) {
                 }}>
                 <Image source={successImg} style={{ width: 120, height: 120, }} />
               </View>
-
-
               <Text style={{
                 fontSize: 20,
                 fontWeight: 'bold',
@@ -630,7 +615,8 @@ export function SuccessModal(props: SuccessModalProps) {
 
               {/* Body */}
               <View style={{
-                marginVertical: 20,
+                // marginVertical: 20,
+                // width: '100%',
               }}>
                 <Text style={{
                   fontSize: 16,
@@ -648,19 +634,35 @@ export function SuccessModal(props: SuccessModalProps) {
                   lineHeight: 26,
                 }}>Good luck!</Text>
               </View>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => {
-                  setModalVisible(!modalVisible);
-                  continueGame();
-                }}>
-                <Text style={styles.textStyle}>Continue</Text>
-              </Pressable>
-            </ImageBackground>
+
+              <View style={{
+                width: '100%',
+                alignItems: 'center',
+                marginTop: 20,
+                justifyContent: 'center',
+              }}>
+                <Pressable
+                    style={{
+                      width: '100%',
+                      height: 50,
+                      borderRadius: 10,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: '#0C4E50',
+                    }}
+                  onPress={() => {
+                    setModalVisible(!modalVisible);
+                    continueGame();
+                  }}>
+                  <Text style={{
+                  fontSize: 16,
+                  fontWeight: 'bold',
+                  color: 'white',
+                }}>Continue</Text>
+                </Pressable>
+              </View>
           </View>
-
         </View>
-
       </Modal>
     </View>
   )
@@ -676,11 +678,12 @@ type FailedModalProps = {
 export function FailedModal(props: FailedModalProps) {
   const { failedModalVisible, setFailedModalVisible, maxMoves, continueGame } = props;
   return (
-    <View style={styles.centeredView}>
+    <View >
       <Modal
         animationType="slide"
         transparent={true}
-        visible={failedModalVisible}
+        // visible={true}
+      visible={failedModalVisible}
       >
         <View style={styles.centeredView}>
           <View style={[styles.modalView, { padding: 20, }]}>
@@ -689,7 +692,7 @@ export function FailedModal(props: FailedModalProps) {
               fontWeight: 'bold',
               textAlign: 'center',
               marginTop: 20,
-            }}>Oops!</Text>
+            }}>You Didn't Match Them All!</Text>
             {/* Body */}
             <View style={{
               marginVertical: 20,
@@ -698,25 +701,36 @@ export function FailedModal(props: FailedModalProps) {
                 fontSize: 16,
                 fontWeight: 'normal',
                 lineHeight: 20,
-              }}>You failed to complete the match within {maxMoves} moves.</Text>
-              <Text style={{
-                fontSize: 16,
-                fontWeight: 'normal',
-                lineHeight: 26,
-              }}>Please try again.</Text>
+              }}>Oops! You didn't match all the cards within the required moves, but don't worry, with practice and determination, you'll succeed!</Text>
             </View>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => {
-                setFailedModalVisible(!failedModalVisible);
-                continueGame();
-              }}>
-              <Text style={styles.textStyle}>Try again</Text>
-            </Pressable>
+            <View style={{
+              width: '100%',
+              alignItems: 'center',
+              marginTop: 20,
+              justifyContent: 'center',
+            }}>
+              <Pressable
+                style={{
+                  width: '100%',
+                  height: 50,
+                  borderRadius: 10,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: '#0C4E50',
+                }}
+                onPress={() => {
+                  setFailedModalVisible(!failedModalVisible);
+                  continueGame();
+                }}>
+                <Text style={{
+                  fontSize: 16,
+                  fontWeight: 'bold',
+                  color: 'white',
+                }} >Play again</Text>
+              </Pressable>
+            </View>
           </View>
-
         </View>
-
       </Modal>
     </View>
   )
@@ -780,9 +794,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+   
   },
   modalView: {
-    margin: 20,
+    width: '80%',
     backgroundColor: 'white',
     borderRadius: 20,
     alignItems: 'center',
@@ -794,7 +810,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    flex: 0.58,
+    // flex: 0.58,
   },
   button: {
     borderRadius: 20,
